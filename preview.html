@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>对话成册 · PDF 预览</title>
+  <link rel="stylesheet" href="styles.css">
+  <style id="page-rules">@page { size: A4 portrait; margin: 16mm 17mm; }</style>
+  <script src="sanitize.js" defer></script>
+  <script src="preview.js" defer></script>
+</head>
+<body>
+  <header class="topbar no-print">
+    <div class="brand"><span class="page-mark" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>对话成册</strong><span>ChatGPT → PDF</span></div></div>
+    <div class="top-actions"><span id="count" class="count">正在准备</span><button id="print" class="primary" disabled>保存为 PDF <span aria-hidden="true">↗</span></button></div>
+  </header>
+  <div class="workspace">
+    <aside class="sidebar no-print" aria-label="导出设置">
+      <div class="section-heading">整理这段对话<span class="local-badge">本地处理</span></div>
+      <label class="field" for="title">文档标题<input id="title" maxlength="200" placeholder="ChatGPT 对话" disabled></label>
+      <div class="field-row">
+        <label class="field" for="paper">纸张<select id="paper"><option value="A4">A4</option><option value="Letter">Letter</option></select></label>
+        <label class="field" for="orientation">方向<select id="orientation"><option value="portrait">纵向</option><option value="landscape">横向 · 宽表格</option></select></label>
+      </div>
+      <div class="field-row">
+        <label class="field" for="fontSize">正文字号<select id="fontSize"><option value="10">紧凑 · 10 pt</option><option value="11" selected>标准 · 11 pt</option><option value="13">大字 · 13 pt</option></select></label>
+        <label class="field" for="scope">消息范围<select id="scope"><option value="all">全部消息</option><option value="assistant">仅 ChatGPT</option><option value="user">仅我的提问</option></select></label>
+      </div>
+      <div class="checks">
+        <label><input type="checkbox" id="metadata" checked>保留来源与导出时间</label>
+        <label><input type="checkbox" id="images" checked>包含图片</label>
+        <label id="remote-option" hidden><input type="checkbox" id="remoteImages">允许加载未嵌入的原图片</label>
+      </div>
+      <section class="message-picker" aria-labelledby="picker-heading">
+        <div class="picker-heading"><h2 id="picker-heading">选择消息</h2><button id="select-all" class="text-button">全选</button><button id="select-none" class="text-button">全不选</button></div>
+        <div id="message-list" class="message-list"><p class="quiet">读取后可逐条选择。</p></div>
+        <p id="navigation-status" class="navigation-status" role="status" aria-live="polite">点击文字定位；勾选框决定是否导出。</p>
+      </section>
+      <p class="privacy">无需账号密钥，无上传服务。关闭此预览标签页后清除本次临时副本。你的排版偏好会保存在本机。</p>
+    </aside>
+    <main class="preview-area" aria-label="文档预览">
+      <div class="preview-caption no-print"><span>文档预览</span><span id="paper-label">A4 · 纵向</span></div>
+      <div id="notice" class="notice no-print" role="status" aria-live="polite">正在读取聊天，请稍候…</div>
+      <details id="warnings-box" class="warnings no-print" hidden><summary id="warnings-summary">读取提示</summary><ul id="warnings"></ul></details>
+      <article id="document" class="paper" hidden>
+        <header class="document-header"><div class="eyebrow">CHATGPT / 对话存档</div><h1 id="document-title">ChatGPT 对话</h1><div id="document-meta" class="document-meta"></div></header>
+        <div id="messages"></div>
+        <p id="empty-selection" class="empty-selection" hidden>还没有选择消息。请在左侧勾选要导出的内容。</p>
+        <footer class="document-footer">对话成册<span id="footer-count"></span></footer>
+      </article>
+      <p id="print-hint" class="print-hint no-print" hidden>点击“保存为 PDF”，在打印窗口中选择“另存为 PDF”。最终分页以打印窗口为准；建议关闭浏览器的页眉和页脚。</p>
+    </main>
+  </div>
+</body>
+</html>

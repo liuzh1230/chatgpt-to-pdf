@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>对话成册 · 安装与使用</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#edf1f8;color:#202b43;font:16px/1.9 "Segoe UI","Microsoft YaHei",sans-serif}main{max-width:830px;margin:55px auto;padding:45px 52px;background:white;border-radius:10px;box-shadow:0 8px 40px #202b430b}small{color:#3459d5;letter-spacing:2px}h1{font-size:32px;margin:10px 0 4px}h2{font-size:21px;margin:32px 0 10px}p{color:#59667d}li{margin:10px 0;padding-left:4px}code{font:14px Consolas,monospace;background:#edf1f8;padding:4px 7px;border-radius:4px}a{color:#3459d5}a:focus-visible{outline:3px solid #7896ef;outline-offset:4px}.button{display:inline-block;padding:9px 20px;border-radius:6px;color:white;background:#3459d5;text-decoration:none;margin:9px 10px 9px 0}.note{padding:14px 18px;background:#f4f6fa;border-left:3px solid #3459d5;font-size:14px}footer{border-top:1px solid #d8dfeb;margin-top:30px;padding-top:18px;font-size:13px;color:#59667d}@media(max-width:650px){main{margin:15px;padding:25px}h1{font-size:27px}}
+</style></head><body><main>
+<small>CHATGPT → PDF</small><h1>对话成册</h1><p>把网页聊天整理成可以保存、搜索和打印的文档。<br>适用于 Chrome / Edge，无需服务器或 API Key。</p>
+<a class="button" href="preview.html?demo=1">先看看示例效果 ↗</a><a href="README.md">完整说明</a>
+<p class="note"><strong>1.0.2 新增点击左侧消息定位。</strong>点击消息文字可滚动到正文并短暂高亮，复选框控制是否导出。已安装旧版时，请覆盖原扩展文件夹，在扩展管理页点击“重新加载”，确认版本为 1.0.2。关闭旧预览，从原聊天重新打开。</p>
+<h2>安装一次，以后直接使用</h2>
+<ol><li>解压下载的 ZIP 文件，保留 <strong>chatgpt-to-pdf</strong> 文件夹。</li><li>在 Chrome 地址栏输入 <code>chrome://extensions</code>；Edge 输入 <code>edge://extensions</code>。</li><li>开启<strong>开发者模式</strong>，点击<strong>加载已解压的扩展程序</strong>，选择包含 <code>manifest.json</code> 的文件夹。</li><li>点击浏览器工具栏的扩展按钮，把<strong>对话成册</strong>固定到工具栏。</li></ol>
+<h2>导出一段聊天</h2>
+<ol><li>在 ChatGPT 网页打开聊天，等待回答完成，并滚动加载需要保留的历史内容。</li><li>点击工具栏的<strong>对话成册</strong>图标。</li><li>在预览中修改标题、勾选消息、设置纸张与字号。</li><li>点击<strong>保存为 PDF</strong>，在浏览器打印窗口选择<strong>另存为 PDF</strong>，再保存文件。</li></ol>
+<p class="note">建议关闭浏览器打印窗口的“页眉和页脚”。宽表格可切换横向纸张，最终分页以打印窗口为准。</p>
+<h2>导出前核对这两件事</h2>
+<p><strong>消息是否完整：</strong>本版只读取当前页面已加载的当前聊天分支，不会自动遍历账号里的全部聊天。虚拟滚动可能使较早内容卸载，请核对第一条、最后一条和消息数量。</p>
+<p><strong>图片是否显示：</strong>未能嵌入的图片会显示文字提示。勾选“允许加载未嵌入的原图片”会尝试连接原图片网站；受登录或跨域限制时仍可能失败。</p>
+<footer>版本 1.0.2 · 独立本地开发版，未上架扩展商店<br>聊天内容不上传；关闭预览标签页后清除本次临时副本。<br><a href="TESTING.md">查看测试记录与适配边界</a></footer>
+</main></body></html>
