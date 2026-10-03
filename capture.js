@@ -2,23 +2,78 @@
 (async () => {
   const { cleanNode, safeUrl } = globalThis.ChatPdfSanitize;
   const warnings = new Set();
-  const main = document.querySelector('main') || document;
   const roleSelector = '[data-message-author-role="user"],[data-message-author-role="assistant"]';
-  const visible = (el) => {
-    const style = getComputedStyle(el);
-    return !el.closest('[hidden],[aria-hidden="true"]') && style.display !== 'none' && style.visibility !== 'hidden' && el.getClientRects().length > 0;
+  const modernSelector = '[data-chatgpt-search-unit-key],[data-content-search-unit-key]';
+  const turnSelector = '[data-testid^="conversation-turn-"],[data-turn="user"],[data-turn="assistant"],' + modernSelector;
+  const scopes = [...document.querySelectorAll('main,[role="main"]')];
+  const countMarkers = (scope) => scope.querySelectorAll(roleSelector + ',' + turnSelector).length;
+  const main = scopes.sort((a, b) => countMarkers(b) - countMarkers(a))[0] || document;
+  // A contents wrapper has no box of its own, although its children are shown.
+  // Also check ancestors: display:none on a parent does not change this node's
+  // computed display, and a hidden branch must never be included.
+  const hidden = (el) => {
+    if (!el || el.closest('[hidden],[aria-hidden="true"]')) return true;
+    for (let current = el; current; current = current.parentElement) {
+      const style = getComputedStyle(current);
+      if (style.display === 'none' || ['hidden', 'collapse'].includes(style.visibility) || style.contentVisibility === 'hidden') return true;
+    }
+    return false;
   };
-  let roots = [...main.querySelectorAll(roleSelector)].filter(visible);
-  if (!roots.length) {
-    roots = [...main.querySelectorAll('[data-testid^="conversation-turn-"]')].filter(visible).flatMap((turn) => {
-      const body = turn.querySelector('.markdown, .whitespace-pre-wrap');
-      if (!body) return [];
-      const label = turn.querySelector('h5,h6')?.textContent || '';
-      const role = /ChatGPT|assistant/i.test(label) ? 'assistant' : /You said|你说|您说/i.test(label) ? 'user' : null;
-      return role ? [{ element: body, role }] : [];
+  const visible = (el) => {
+    if (hidden(el)) return false;
+    if (el.getClientRects().length) return true;
+    return [...el.querySelectorAll('*')].some(child => child.getClientRects().length && !hidden(child)) || [...el.childNodes].some(node => {
+      if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return false;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      return range.getClientRects().length > 0;
     });
-    if (roots.length) warnings.add('使用兼容模式读取，请核对说话者和消息顺序。');
+  };
+  // Only search outside main when it has no conversation markers at all.
+  const scope = countMarkers(main) ? main : document;
+  const roleNodes = [...scope.querySelectorAll(roleSelector)];
+  const turns = [...scope.querySelectorAll(turnSelector)];
+  const modernUnits = [...scope.querySelectorAll(modernSelector)];
+  const unitKey = (element) => element.getAttribute('data-chatgpt-search-unit-key') || element.getAttribute('data-content-search-unit-key') || '';
+  const unitRole = (element) => /(?:^|:)(user|assistant)$/.exec(unitKey(element))?.[1];
+  // The current web app no longer uses data-message-author-role or conversation-
+  // turn test IDs. Its search-unit key ends with the explicit speaker role.
+  // A user unit includes attachments, then a nested text unit with the same key:
+  // keep the outer unit so neither its pictures nor its text are duplicated.
+  const roots = modernUnits.filter(element => {
+    if (!unitRole(element) || !visible(element)) return false;
+    for (let parent = element.parentElement; parent && scope.contains(parent); parent = parent.parentElement) {
+      if (parent.matches(modernSelector) && unitKey(parent) === unitKey(element)) return false;
+    }
+    return true;
+  }).map(element => ({ element, role: unitRole(element), modern: true }));
+  const modernMessages = roots.length;
+  for (const element of roleNodes) {
+    if (element.querySelector(roleSelector) || !visible(element)) continue;
+    if (roots.some(item => item.element.contains(element) || element.contains(item.element))) continue;
+    roots.push({ element, role: element.getAttribute('data-message-author-role') });
   }
+  const headingRole = (heading) => {
+    const label = heading.textContent.trim();
+    if (/^(?:ChatGPT(?: said| says)?|assistant|ChatGPT\s*说(?:道)?)\s*[:：]?$/i.test(label)) return 'assistant';
+    if (/^(?:You said|You|user|你说|您说|你|用户)\s*[:：]?$/i.test(label)) return 'user';
+    return null;
+  };
+  let compatibleTurns = 0;
+  // Some turns keep author attributes while others use a labelled article.
+  // Fill the missing turns even if other messages used the primary selector.
+  for (const turn of turns) {
+    if (!visible(turn) || roots.some(item => turn.contains(item.element) || item.element.contains(turn))) continue;
+    if (turn.querySelector(turnSelector)) continue;
+    const label = [...turn.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(heading => !heading.closest('.markdown,[data-markdown-text-style]') && headingRole(heading));
+    const turnRole = turn.getAttribute('data-turn');
+    const role = ['user', 'assistant'].includes(turnRole) ? turnRole : label && headingRole(label);
+    if (!role || !turn.querySelector('.markdown,.whitespace-pre-wrap,[data-message-content],[data-markdown-text-style],img,math')) continue;
+    roots.push({ element: turn, role, compatible: true });
+    compatibleTurns++;
+  }
+  roots.sort((a, b) => a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+  if (compatibleTurns) warnings.add('使用兼容模式读取，请核对说话者和消息顺序。');
   let embeddedBytes = 0;
   let externalImages = 0;
   let imageCount = 0;
@@ -67,30 +122,33 @@
   // Galleries may be siblings of the text container. Never use another turn.
   function attachmentScope(root, role) {
     if (role !== 'user') return root;
-    const turn = root.closest('[data-testid^="conversation-turn-"],article');
-    if (turn && main.contains(turn)) {
+    const turn = root.closest(turnSelector + ',article');
+    if (turn && scope.contains(turn)) {
       const authors = [...turn.querySelectorAll(roleSelector)].filter(el => !el.querySelector(roleSelector));
       if (authors.length === 0 || (authors.length === 1 && authors[0] === root)) return turn;
     }
-    let scope = root;
+    let attachment = root;
     for (let i = 0; i < 3; i++) {
-      const parent = scope.parentElement;
-      if (!parent || parent === main || !main.contains(parent)) break;
+      const parent = attachment.parentElement;
+      if (!parent || parent === scope || !scope.contains(parent)) break;
       const authors = [...parent.querySelectorAll(roleSelector)].filter(el => !el.querySelector(roleSelector));
       if (authors.length !== 1 || authors[0] !== root) break;
-      scope = parent;
+      attachment = parent;
     }
-    return scope;
+    return attachment;
   }
   for (const item of roots) {
-    const root = item.element || item;
-    const role = item.role || root.getAttribute('data-message-author-role');
-    if (root.querySelector(roleSelector)) continue;
-    const messageId = root.getAttribute('data-message-id');
+    const { element: root, role } = item;
+    const messageId = root.getAttribute('data-message-id') || root.getAttribute('data-chatgpt-selection-message-id') ||
+      root.getAttribute('data-chatgpt-search-message-ids')?.trim().split(/\s+/)[0] ||
+      root.querySelector('[data-chatgpt-selection-message-id]')?.getAttribute('data-chatgpt-selection-message-id');
     if (messageId && seen.has(messageId)) continue;
     if (messageId) seen.add(messageId);
-    const body = role === 'user' ? root : (root.querySelector('.markdown') || root);
+    // Keep every content block in a message, rather than only its first markdown.
+    const body = root;
     const copy = body.cloneNode(true);
+    const sourceElements = [...body.querySelectorAll('*')];
+    const copiedElements = [...copy.querySelectorAll('*')];
     const pairs = [];
     const originals = [...body.querySelectorAll('img')];
     // Pair before removing controls, otherwise deleted images shift indexes.
@@ -98,10 +156,15 @@
       const original = originals[index];
       if (imageIsContent(original)) pairs.push({ original, clone }); else clone.remove();
     });
+    // Sanitization cannot see the source page's CSS after cloning. Remove CSS
+    // hidden branches while the source and clone still have matching indexes.
+    sourceElements.forEach((element, index) => {
+      if (hidden(element)) copiedElements[index].remove();
+    });
     const before = document.createDocumentFragment();
     const after = document.createDocumentFragment();
-    const scope = attachmentScope(root, role);
-    for (const original of scope.querySelectorAll('img')) {
+    const attachments = attachmentScope(root, role);
+    for (const original of attachments.querySelectorAll('img')) {
       if (body.contains(original) || !imageIsContent(original)) continue;
       const clone = original.cloneNode(false);
       const figure = document.createElement('figure'); figure.append(clone);
@@ -111,6 +174,9 @@
     const container = document.createElement('div');
     container.append(before, copy, after);
     copy.querySelectorAll(uiSelector).forEach(el => el.remove());
+    if (item.compatible) copy.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(heading => {
+      if (!heading.closest('.markdown,[data-markdown-text-style]') && headingRole(heading)) heading.remove();
+    });
     // Preserve the picture inside a viewer button, but not its controls.
     copy.querySelectorAll('button').forEach(button => {
       const pictures = [...button.querySelectorAll('img')];
@@ -163,6 +229,7 @@
     url: location.origin + location.pathname,
     capturedAt: new Date().toISOString(),
     messages, warnings: [...warnings], externalImages, imageCount,
-    scope: 'loaded-messages'
+    scope: 'loaded-messages',
+    diagnostics: { roleNodes: roleNodes.length, visibleRoleNodes: roleNodes.filter(visible).length, turnNodes: turns.length, compatibleTurns, modernUnitNodes: modernUnits.length, modernMessages }
   };
 })();

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "对话成册 · ChatGPT 转 PDF",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "将 ChatGPT 当前已加载的聊天整理为可选择文字的 PDF，支持消息筛选、中文、代码、表格和打印预览。",
   "minimum_chrome_version": "114",
   "permissions": ["activeTab", "scripting", "storage"],
