@@ -5,14 +5,17 @@
 </style></head><body><main>
 <small>CHATGPT → PDF</small><h1>对话成册</h1><p>把网页聊天整理成可以保存、搜索和打印的文档。<br>适用于 Chrome / Edge，无需服务器或 API Key。</p>
 <a class="button" href="preview.html?demo=1">先看看示例效果 ↗</a><a href="README.md">完整说明</a>
-<p class="note"><strong>1.0.4 适配 ChatGPT 网页的新消息结构。</strong>使用用户保存的真实页面验证，已读取 9 条消息并保留图片节点和公式。已安装上一修复版时，在扩展管理页点击“重新加载”，确认版本为 1.0.4。关闭旧预览，刷新原聊天，再点击扩展。首次安装请解压 v1.0.4 安装包，加载其中含有 manifest.json 的 chatgpt-to-pdf 文件夹。</p>
+<p class="note"><strong>1.0.5 新增分享链接导出，原有单击导出保持不变。</strong>首次安装请加载新版文件夹；已有用户可将新版文件复制到原安装目录，再重新加载扩展，确认版本为 1.0.5。关闭旧预览、刷新原聊天后再使用。</p>
 <h2>安装一次，以后直接使用</h2>
 <ol><li>解压下载的 ZIP 文件，保留 <strong>chatgpt-to-pdf</strong> 文件夹。</li><li>在 Chrome 地址栏输入 <code>chrome://extensions</code>；Edge 输入 <code>edge://extensions</code>。</li><li>开启<strong>开发者模式</strong>，点击<strong>加载已解压的扩展程序</strong>，选择包含 <code>manifest.json</code> 的文件夹。</li><li>点击浏览器工具栏的扩展按钮，把<strong>对话成册</strong>固定到工具栏。</li></ol>
 <h2>导出一段聊天</h2>
 <ol><li>在 ChatGPT 网页打开聊天，等待回答完成，并滚动加载需要保留的历史内容。</li><li>点击工具栏的<strong>对话成册</strong>图标。</li><li>在预览中修改标题、勾选消息、设置纸张与字号。</li><li>点击<strong>保存为 PDF</strong>，在浏览器打印窗口选择<strong>另存为 PDF</strong>，再保存文件。</li></ol>
 <p class="note">建议关闭浏览器打印窗口的“页眉和页脚”。宽表格可切换横向纸张，最终分页以打印窗口为准。</p>
+<h2>新增：粘贴分享链接导出</h2>
+<ol><li>右键工具栏的<strong>对话成册</strong>图标，选择<strong>选项</strong>；也可点击预览页右上角的<strong>分享链接导出</strong>。</li><li>粘贴 <code>https://chatgpt.com/share/…</code>，点击<strong>读取分享链接</strong>。</li><li>首次使用时允许访问 ChatGPT 网站。扩展打开分享页，等待正文后自动进入 PDF 预览。</li><li>核对首尾、消息数与读取提示，按原来的方式筛选并保存 PDF。</li></ol>
+<p class="note">需要登录或验证时，请在已打开的页面完成后重试。私人聊天请用原来的工具栏方式导出。分享入口底部可撤销新增权限，不影响原有导出。</p>
 <h2>导出前核对这两件事</h2>
 <p><strong>消息是否完整：</strong>本版只读取当前页面已加载的当前聊天分支，不会自动遍历账号里的全部聊天。虚拟滚动可能使较早内容卸载，请核对第一条、最后一条和消息数量。</p>
 <p><strong>图片是否显示：</strong>未能嵌入的图片会显示文字提示。勾选“允许加载未嵌入的原图片”会尝试连接原图片网站；受登录或跨域限制时仍可能失败。</p>
-<footer>版本 1.0.4 · 独立本地开发版，未上架扩展商店<br>聊天内容不上传；关闭预览标签页后清除本次临时副本。<br><a href="TESTING.md">查看测试记录与适配边界</a></footer>
+<footer>版本 1.0.5 · 独立本地开发版，未上架扩展商店<br>聊天内容不上传到第三方；关闭预览后清除临时副本。<br><a href="TESTING.md">查看测试记录与适配边界</a></footer>
 </main></body></html>

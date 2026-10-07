@@ -1,9 +1,10 @@
 /* Chat content lives only in storage.session. Preferences use storage.local. */
+importScripts('share-url.js', 'share-ready.js', 'share-background.js');
 const PREFIX = 'capture:';
 
 chrome.action.onClicked.addListener((tab) => { void openCapture(tab); });
 
-async function openCapture(tab) {
+async function openCapture(tab, shared = null) {
   const id = crypto.randomUUID();
   const key = PREFIX + id;
   let previewTab;
@@ -25,13 +26,23 @@ async function openCapture(tab) {
     if (!url || url.protocol !== 'https:' || !['chatgpt.com', 'chat.openai.com'].includes(url.hostname)) {
       throw new Error('请先打开 chatgpt.com 中的一段聊天，再点击浏览器工具栏里的“对话成册”。');
     }
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id }, files: ['sanitize.js']
-    });
+    // Pin link exports to the loaded document, protecting against a later navigation.
+    const target = shared?.documentId ? { tabId: tab.id, documentIds: [shared.documentId] } : { tabId: tab.id };
+    if (shared) {
+      const check = await chrome.scripting.executeScript({ target, func: () => location.origin + location.pathname });
+      if (ChatPdfShare.parseShareUrl(check[0]?.result) !== shared.url) throw new Error('分享页地址发生了变化，请重新读取。');
+    }
+    await chrome.scripting.executeScript({ target, files: ['sanitize.js'] });
+    if (shared) await chrome.scripting.executeScript({ target, files: ['vendor/katex.min.js', 'share-math.js'] });
     const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id }, files: ['capture.js']
+      target, files: ['capture.js']
     });
     const data = results[0]?.result;
+    if (shared && ChatPdfShare.parseShareUrl(data?.url) !== shared.url) throw new Error('读取期间分享页地址发生了变化，请重新读取。');
+    if (shared) {
+      const math = await chrome.scripting.executeScript({ target, func: () => [...(globalThis.ChatPdfShareMathWarnings || [])] });
+      data.warnings = [...(data.warnings || []), ...(shared.warnings || []), ...(math[0]?.result || [])];
+    }
     if (!Array.isArray(data?.messages)) {
       throw new Error('读取脚本没有返回有效结果。请重新加载扩展、刷新 ChatGPT 页面后重试。');
     }

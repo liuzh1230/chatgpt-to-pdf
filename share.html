@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>分享链接导出 · 对话成册</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="share.css">
+  <script src="share-url.js" defer></script>
+  <script src="share.js" defer></script>
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="page-mark" aria-hidden="true"><i></i><i></i><i></i></span><div><strong>对话成册</strong><span>ChatGPT → PDF</span></div></div><span class="local-badge">本地处理</span></header>
+  <main class="share-card">
+    <div class="eyebrow">从分享链接开始</div>
+    <h1>把一段对话，保存成册。</h1>
+    <p class="share-intro">粘贴 ChatGPT 的分享链接。读取后，可在原有预览中选择消息、调整排版并保存 PDF。</p>
+    <form id="share-form" novalidate>
+      <label class="field" for="share-url">ChatGPT 分享链接
+        <input id="share-url" type="url" inputmode="url" autocomplete="off" spellcheck="false" maxlength="2048" placeholder="https://chatgpt.com/share/…" aria-describedby="share-help share-status" required>
+      </label>
+      <p id="share-help" class="quiet">在 ChatGPT 对话中点击“分享”，复制生成的链接。这里只接受分享链接。</p>
+      <button id="share-submit" class="primary" type="submit">读取分享链接 <span aria-hidden="true">↗</span></button>
+      <p id="share-status" class="share-status" role="status" aria-live="polite">读取时会打开分享页，完成后自动进入 PDF 预览。</p>
+    </form>
+    <div class="share-notes">
+      <p><strong>第一次使用</strong>浏览器会请求访问 chatgpt.com。该权限覆盖此网站；扩展仅在你发起导出时读取页面。拒绝授权不影响原来的当前聊天导出。</p>
+      <p><strong>读取前后</strong>请保留分享页，完成必要的登录或网页验证。只导出页面已加载的内容，长对话请核对首尾和消息数量。</p>
+      <p><strong>仍可按原来的方式导出</strong>打开 ChatGPT 聊天，直接点击工具栏的“对话成册”图标。</p>
+    </div>
+    <footer class="share-footer"><span>聊天不上传到第三方，关闭预览后清除临时副本。</span><button id="revoke-permission" class="text-button" type="button" hidden>撤销分享页访问权限</button></footer>
+  </main>
+</body>
+</html>
