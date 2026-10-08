@@ -44,8 +44,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!await chrome.permissions.contains({ origins: ChatPdfShare.origins })) {
         throw new Error('尚未允许读取 ChatGPT 分享页，请点击“读取分享链接”并允许网站访问。');
       }
-      const source = await chrome.tabs.create({ url, active: true });
+      const source = await chrome.tabs.create({ url: ChatPdfShare.openShareUrl(url), active: true });
       await waitForShareLoad(source.id, url);
+      if (url.includes('/s/cx_')) await chrome.scripting.executeScript({ target: { tabId: source.id }, files: ['cx-page.js'] });
       const results = await chrome.scripting.executeScript({
         target: { tabId: source.id }, func: waitForSharedConversation, args: [url]
       });

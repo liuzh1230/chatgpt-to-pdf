@@ -32,6 +32,9 @@ async function openCapture(tab, shared = null) {
       const check = await chrome.scripting.executeScript({ target, func: () => location.origin + location.pathname });
       if (ChatPdfShare.parseShareUrl(check[0]?.result) !== shared.url) throw new Error('分享页地址发生了变化，请重新读取。');
     }
+    if (url.hostname === 'chatgpt.com' && /^\/s\/cx_[a-f0-9]{32}\/?$/i.test(url.pathname)) {
+      await chrome.scripting.executeScript({ target, files: ['cx-page.js'] });
+    }
     await chrome.scripting.executeScript({ target, files: ['sanitize.js'] });
     if (shared) await chrome.scripting.executeScript({ target, files: ['vendor/katex.min.js', 'share-math.js'] });
     const results = await chrome.scripting.executeScript({
@@ -41,7 +44,7 @@ async function openCapture(tab, shared = null) {
     if (shared && ChatPdfShare.parseShareUrl(data?.url) !== shared.url) throw new Error('读取期间分享页地址发生了变化，请重新读取。');
     if (shared) {
       const math = await chrome.scripting.executeScript({ target, func: () => [...(globalThis.ChatPdfShareMathWarnings || [])] });
-      data.warnings = [...(data.warnings || []), ...(shared.warnings || []), ...(math[0]?.result || [])];
+      data.warnings = [...new Set([...(data.warnings || []), ...(shared.warnings || []), ...(math[0]?.result || [])])];
     }
     if (!Array.isArray(data?.messages)) {
       throw new Error('读取脚本没有返回有效结果。请重新加载扩展、刷新 ChatGPT 页面后重试。');

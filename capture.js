@@ -48,6 +48,14 @@
     return true;
   }).map(element => ({ element, role: unitRole(element), modern: true }));
   const modernMessages = roots.length;
+  if (globalThis.ChatPdfCx?.isPage()) {
+    const cx = globalThis.ChatPdfCx.discover();
+    if (cx.error) throw new Error(cx.error);
+    // CX roots are authoritative for this page template; normal chat selection
+    // stays unchanged. No source-page nodes or attributes are modified.
+    roots.splice(0, roots.length, ...cx.roots);
+    cx.warnings.forEach(warning => warnings.add(warning));
+  }
   for (const element of roleNodes) {
     if (element.querySelector(roleSelector) || !visible(element)) continue;
     if (roots.some(item => item.element.contains(element) || element.contains(item.element))) continue;
@@ -141,7 +149,7 @@
     const { element: root, role } = item;
     const messageId = root.getAttribute('data-message-id') || root.getAttribute('data-chatgpt-selection-message-id') ||
       root.getAttribute('data-chatgpt-search-message-ids')?.trim().split(/\s+/)[0] ||
-      root.querySelector('[data-chatgpt-selection-message-id]')?.getAttribute('data-chatgpt-selection-message-id');
+      root.querySelector('[data-chatgpt-selection-message-id]')?.getAttribute('data-chatgpt-selection-message-id') || (item.cx ? root.id : null);
     if (messageId && seen.has(messageId)) continue;
     if (messageId) seen.add(messageId);
     // Keep every content block in a message, rather than only its first markdown.
@@ -173,6 +181,11 @@
     }
     const container = document.createElement('div');
     container.append(before, copy, after);
+    for (let index = 0; index < (item.missingAttachments || 0); index++) {
+      const note = document.createElement('p');
+      note.textContent = '[分享页附件仅显示占位，原图片或文件不可读取]';
+      container.prepend(note);
+    }
     copy.querySelectorAll(uiSelector).forEach(el => el.remove());
     if (item.compatible) copy.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(heading => {
       if (!heading.closest('.markdown,[data-markdown-text-style]') && headingRole(heading)) heading.remove();
@@ -230,6 +243,6 @@
     capturedAt: new Date().toISOString(),
     messages, warnings: [...warnings], externalImages, imageCount,
     scope: 'loaded-messages',
-    diagnostics: { roleNodes: roleNodes.length, visibleRoleNodes: roleNodes.filter(visible).length, turnNodes: turns.length, compatibleTurns, modernUnitNodes: modernUnits.length, modernMessages }
+    diagnostics: { roleNodes: roleNodes.length, visibleRoleNodes: roleNodes.filter(visible).length, turnNodes: turns.length, compatibleTurns, modernUnitNodes: modernUnits.length, modernMessages, cxMessages: roots.filter(item => item.cx).length }
   };
 })();
